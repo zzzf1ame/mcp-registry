@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+alembic
+pydantic
+pydantic-settings
+python-dotenv
+httpx
+python-multipart
+python-slugify
+aiosqlite
