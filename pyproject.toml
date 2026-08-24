@@ -59,6 +59,8 @@ line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B"]
+# B008: FastAPI 的 Depends/Query 就是设计为在参数默认值中调用
+ignore = ["B008"]
 
 [tool.mypy]
 python_version = "3.11"

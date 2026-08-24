@@ -3,13 +3,13 @@ MCP Registry 评论 API 路由。
 提供评论的创建和查询接口。
 """
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.database import get_db
-from app.models import Review
+from app.models import MCPServer, Review
 from app.schemas import (
     ReviewCreateRequest,
     ReviewCreateResponse,
@@ -69,6 +69,10 @@ async def create_review(
     db: AsyncSession = Depends(get_db),
 ):
     """创建评论。"""
+    server = await db.scalar(select(MCPServer.id).where(MCPServer.id == data.server_id))
+    if server is None:
+        raise HTTPException(status_code=404, detail="Server not found")
+
     review = Review(
         server_id=data.server_id,
         rating=data.rating,

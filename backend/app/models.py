@@ -3,8 +3,8 @@ MCP Registry 数据库模型。
 使用 SQLAlchemy 2.0 声明式映射。
 """
 
-from datetime import datetime, timezone
-from enum import Enum as PyEnum
+from datetime import UTC, datetime
+from enum import StrEnum
 
 from sqlalchemy import (
     Column,
@@ -24,7 +24,7 @@ class Base(DeclarativeBase):
     """所有模型的基类。"""
 
 
-class SubmissionStatus(str, PyEnum):
+class SubmissionStatus(StrEnum):
     """提交审核状态。"""
 
     PENDING = "pending"
@@ -53,9 +53,9 @@ class MCPServer(Base):
     github_last_push = Column(DateTime(timezone=True), nullable=True)
 
     # 审核状态
-    status = Column(String(20), default=SubmissionStatus.APPROVED.value, index=True)
+    status = Column(String(20), default=SubmissionStatus.PENDING.value, index=True)
     submitted_by = Column(String(100), nullable=True)
-    submitted_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    submitted_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     approved_at = Column(DateTime(timezone=True), nullable=True)
 
     # 统计
@@ -63,8 +63,8 @@ class MCPServer(Base):
     view_count = Column(Integer, default=0)
 
     # 时间戳
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     # 关系
     versions = relationship("MCPServerVersion", back_populates="server", cascade="all, delete-orphan")
@@ -86,7 +86,7 @@ class MCPServerVersion(Base):
     version = Column(String(50), nullable=False)
     changelog = Column(Text, nullable=True)
     published_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     server = relationship("MCPServer", back_populates="versions")
 
@@ -107,7 +107,7 @@ class Review(Base):
     content = Column(Text, nullable=True)
     author = Column(String(100), nullable=True)
     helpful_count = Column(Integer, default=0)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     server = relationship("MCPServer", back_populates="reviews")
 
