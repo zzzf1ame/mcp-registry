@@ -7,18 +7,16 @@ MCP Registry API 测试。
     python -m pytest test_api.py -v
 """
 
-import asyncio
 from collections.abc import AsyncIterator
 
 import pytest
 import pytest_asyncio
+from app.database import get_db
+from app.main import app
+from app.models import Base
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-
-from app.database import get_db
-from app.main import app
-from app.models import Base, MCPServer, SubmissionStatus
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
@@ -124,6 +122,16 @@ async def test_review_rating_validation(client: AsyncClient, test_db):
         json={"server_id": 1, "rating": 999, "author": "troll"},
     )
     assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_review_nonexistent_server(client: AsyncClient, test_db):
+    """测试：给不存在的服务器创建评论返回 404。"""
+    resp = await client.post(
+        "/api/v1/reviews/",
+        json={"server_id": 99999, "rating": 5, "author": "ghost"},
+    )
+    assert resp.status_code == 404
 
 
 @pytest.mark.asyncio

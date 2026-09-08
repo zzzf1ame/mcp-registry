@@ -3,9 +3,11 @@ MCP 服务器 API 路由。
 提供服务器的 CRUD、搜索、详情等接口。
 """
 
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from slugify import slugify
-from sqlalchemy import desc, func, or_
+from sqlalchemy import desc, func, or_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -97,9 +99,14 @@ async def get_server(
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
 
-    # 增加浏览计数
-    server.view_count += 1
+    # 增加浏览计数（原子更新，避免并发丢计数）
+    await db.execute(
+        update(MCPServer)
+        .where(MCPServer.id == server.id)
+        .values(view_count=MCPServer.view_count + 1)
+    )
     await db.commit()
+    await db.refresh(server)
 
     return ServerDetail(
         id=server.id,
@@ -129,10 +136,10 @@ async def submit_server(
     """提交新的 MCP 服务器（待审核）。"""
     slug = slugify(data.name)
 
-    # 检查 slug 是否已存在
+    # 检查 slug 是否已存在，冲突时追加随机后缀
     existing = await db.execute(select(MCPServer).where(MCPServer.slug == slug))
     if existing.scalar_one_or_none():
-        slug = f"{slug}-{data.repo_url[-8:]}"
+        slug = f"{slug}-{uuid.uuid4().hex[:8]}"
 
     server = MCPServer(
         slug=slug,
